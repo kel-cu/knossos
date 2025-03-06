@@ -486,7 +486,6 @@
             >our documentation</a
           >.
         </MessageBanner>
-        <Promotion v-if="tags.approvedStatuses.includes(project.status)" />
         <div class="navigation-card">
           <NavRow
             :links="[

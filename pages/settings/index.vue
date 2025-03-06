@@ -277,6 +277,10 @@ const colorTheme = defineMessages({
     id: 'settings.display.theme.oled',
     defaultMessage: 'OLED',
   },
+  alin: {
+    id: 'settings.display.theme.alin',
+    defaultMessage: 'AlinTheme',
+  },
   retro: {
     id: 'settings.display.theme.retro',
     defaultMessage: 'Retro',
@@ -394,10 +398,7 @@ const systemTheme = ref('light')
 const theme = useTheme()
 
 const themeOptions = computed(() => {
-  const options = ['system', 'light', 'dark', 'oled']
-  if (flags.value.developerMode || theme.value.preference === 'retro') {
-    options.push('retro')
-  }
+  const options = ['system', 'light', 'dark', 'oled', 'alin', 'retro']
   return options
 })
 

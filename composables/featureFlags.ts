@@ -1,7 +1,7 @@
 import type { CookieOptions } from '#app'
 
 export type ProjectDisplayMode = 'list' | 'grid' | 'gallery'
-export type DarkColorTheme = 'dark' | 'oled' | 'retro'
+export type DarkColorTheme = 'dark' | 'oled' | 'retro' | 'alin'
 
 export interface NumberFlag {
   min: number
@@ -25,7 +25,7 @@ export const DEFAULT_FEATURE_FLAGS = validateValues({
   newProjectMembers: false,
   newProjectDetails: true,
   projectCompatibility: false,
-  removeFeaturedVersions: false,
+  // removeFeaturedVersions: false,
 
   // Alt layouts
   // searchSidebarRight: false,
@@ -35,7 +35,7 @@ export const DEFAULT_FEATURE_FLAGS = validateValues({
   // advancedRendering: true,
   // externalLinksNewTab: true,
   // notUsingBlockers: false,
-  // hideModrinthAppPromos: false,
+  hideModrinthAppPromos: true,
   // preferredDarkTheme: 'dark',
   // hideStagingBanner: false,
 

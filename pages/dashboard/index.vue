@@ -68,12 +68,6 @@
               {{ downloadsProjectCount }}
               project{{ downloadsProjectCount === 1 ? '' : 's' }}</span
             >
-            <!--          <NuxtLink class="goto-link" to="/dashboard/analytics"-->
-            <!--            >View breakdown-->
-            <!--            <ChevronRightIcon-->
-            <!--              class="featured-header-chevron"-->
-            <!--              aria-hidden="true"-->
-            <!--          /></NuxtLink>-->
           </div>
           <div class="grid-display__item">
             <div class="label">Total followers</div>
@@ -91,10 +85,10 @@
           <div class="grid-display__item">
             <div class="label">Current balance</div>
             <div class="value">
-              {{ $formatMoney(auth.user.payout_data.balance, true) }}
+              {{ $formatMoney(userBalance.available, true) }}
             </div>
             <NuxtLink
-              v-if="auth.user.payout_data.balance > 0"
+              v-if="userBalance.available > 0"
               class="goto-link"
               to="/dashboard/revenue"
             >
@@ -102,6 +96,12 @@
               <ChevronRightIcon class="featured-header-chevron" aria-hidden="true" />
             </NuxtLink>
           </div>
+          <NuxtLink class="goto-link view-more-notifs" to="/dashboard/analytics"
+                       >View analytics
+                       <ChevronRightIcon
+                         class="featured-header-chevron"
+                         aria-hidden="true"
+                     /></NuxtLink>
         </div>
       </section>
     </div>
@@ -119,6 +119,10 @@ useHead({
 })
 
 const auth = await useAuth()
+
+const { data: userBalance } = await useAsyncData(`payout/balance`, () =>
+  useBaseFetch(`payout/balance`, { apiVersion: 3 }),
+);
 
 const [{ data: projects }] = await Promise.all([
   useAsyncData(`user/${auth.value.user.id}/projects`, () =>
@@ -140,7 +144,7 @@ const { data, refresh } = await useAsyncData(async () => {
   const slice = filteredNotifications.slice(0, 30) // send first 30 notifs to be grouped before trimming to 3
 
   return fetchExtraNotificationData(slice).then((notifications) => {
-    notifications = groupNotifications(notifications).slice(0, 3)
+    notifications = groupNotifications(notifications).slice(0, 4)
     return { notifications, extraNotifs: filteredNotifications.length - slice.length }
   })
 })

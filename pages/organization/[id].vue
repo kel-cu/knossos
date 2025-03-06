@@ -2,17 +2,14 @@
   <div v-if="organization" class="normal-page">
     <div class="normal-page__sidebar">
       <div v-if="routeHasSettings" class="universal-card">
-        <Breadcrumbs
-          current-title="Settings"
-          :link-stack="[
-            { href: `/dashboard/organizations`, label: 'Organizations' },
-            {
-              href: `/organization/${organization.slug}`,
-              label: organization.name,
-              allowTrimming: true,
-            },
-          ]"
-        />
+        <Breadcrumbs current-title="Settings" :link-stack="[
+          { href: `/dashboard/organizations`, label: 'Organizations' },
+          {
+            href: `/organization/${organization.slug}`,
+            label: organization.name,
+            allowTrimming: true,
+          },
+        ]" />
 
         <div class="page-header__settings">
           <Avatar size="sm" :src="organization.icon_url" />
@@ -35,22 +32,13 @@
           <NavStackItem :link="`/organization/${organization.slug}/settings`" label="Overview">
             <SettingsIcon />
           </NavStackItem>
-          <NavStackItem
-            :link="`/organization/${organization.slug}/settings/members`"
-            label="Members"
-          >
+          <NavStackItem :link="`/organization/${organization.slug}/settings/members`" label="Members">
             <UsersIcon />
           </NavStackItem>
-          <NavStackItem
-            :link="`/organization/${organization.slug}/settings/projects`"
-            label="Projects"
-          >
+          <NavStackItem :link="`/organization/${organization.slug}/settings/projects`" label="Projects">
             <BoxIcon />
           </NavStackItem>
-          <NavStackItem
-            :link="`/organization/${organization.slug}/settings/analytics`"
-            label="Analytics"
-          >
+          <NavStackItem :link="`/organization/${organization.slug}/settings/analytics`" label="Analytics">
             <ChartIcon />
           </NavStackItem>
         </NavStack>
@@ -66,7 +54,9 @@
             <h1 class="title">{{ organization.name }}</h1>
 
             <div>
-              <span class="organization-label"><OrganizationIcon /> Organization</span>
+              <span class="organization-label">
+                <OrganizationIcon /> Organization
+              </span>
             </div>
 
             <div class="organization-description">
@@ -129,7 +119,7 @@
     </div>
     <div v-if="!routeHasSettings" class="normal-page__content">
       <ModalCreation ref="modal_creation" :organization-id="organization.id" />
-      <Promotion />
+
       <div v-if="isInvited" class="universal-card information invited">
         <h2>Invitation to join {{ organization.name }}</h2>
         <p>You have been invited to join {{ organization.name }}.</p>
@@ -143,20 +133,18 @@
         </div>
       </div>
       <nav class="navigation-card">
-        <NavRow
-          :links="[
-            {
-              label: formatMessage(commonMessages.allProjectType),
-              href: `/organization/${organization.slug}`,
-            },
-            ...projectTypes.map((x) => {
-              return {
-                label: formatMessage(getProjectTypeMessage(x, true)),
-                href: `/organization/${organization.slug}/${x}s`,
-              }
-            }),
-          ]"
-        />
+        <NavRow :links="[
+          {
+            label: formatMessage(commonMessages.allProjectType),
+            href: `/organization/${organization.slug}`,
+          },
+          ...projectTypes.map((x) => {
+            return {
+              label: formatMessage(getProjectTypeMessage(x, true)),
+              href: `/organization/${organization.slug}/${x}s`,
+            }
+          }),
+        ]" />
 
         <div v-if="auth.user && currentMember" class="input-group">
           <nuxt-link :to="`/organization/${organization.slug}/settings`" class="iconified-button">
@@ -166,40 +154,25 @@
       </nav>
       <template v-if="projects?.length > 0">
         <div class="project-list display-mode--list">
-          <ProjectCard
-            v-for="project in (route.params.projectType !== undefined
-              ? projects.filter((x) =>
-                  x.project_types.includes(
-                    route.params.projectType.substr(0, route.params.projectType.length - 1)
-                  )
-                )
-              : projects
+          <ProjectCard v-for="project in (route.params.projectType !== undefined
+            ? projects.filter((x) =>
+              x.project_types.includes(
+                route.params.projectType.substr(0, route.params.projectType.length - 1)
+              )
             )
-              .slice()
-              .sort((a, b) => b.downloads - a.downloads)"
-            :id="project.slug || project.id"
-            :key="project.id"
-            :name="project.name"
-            :display="cosmetics.searchDisplayMode.user"
-            :featured-image="project.gallery.find((element) => element.featured)?.url"
-            project-type-url="project"
-            :description="project.summary"
-            :created-at="project.published"
-            :updated-at="project.updated"
-            :downloads="project.downloads.toString()"
-            :follows="project.followers.toString()"
-            :icon-url="project.icon_url"
-            :categories="project.categories"
-            :client-side="project.client_side"
-            :server-side="project.server_side"
-            :status="
-              auth.user && (auth.user.id === user.id || tags.staffRoles.includes(auth.user.role))
+            : projects
+          )
+            .slice()
+            .sort((a, b) => b.downloads - a.downloads)" :id="project.slug || project.id" :key="project.id"
+            :name="project.name" :display="cosmetics.searchDisplayMode.user"
+            :featured-image="project.gallery.find((element) => element.featured)?.url" project-type-url="project"
+            :description="project.summary" :created-at="project.published" :updated-at="project.updated"
+            :downloads="project.downloads.toString()" :follows="project.followers.toString()"
+            :icon-url="project.icon_url" :categories="project.categories" :client-side="project.client_side"
+            :server-side="project.server_side" :status="auth.user && (auth.user.id === user.id || tags.staffRoles.includes(auth.user.role))
                 ? project.status
                 : null
-            "
-            :type="project.project_types[0] ?? 'project'"
-            :color="project.color"
-          />
+              " :type="project.project_types[0] ?? 'project'" :color="project.color" />
         </div>
       </template>
 
@@ -484,9 +457,11 @@ useSeoMeta({
   display: flex;
   flex-direction: column;
   padding: var(--gap-xl);
+
   h3 {
     margin: 0 0 var(--gap-sm);
   }
+
   .creator {
     display: grid;
     gap: var(--gap-xs);
@@ -497,10 +472,12 @@ useSeoMeta({
     grid-template:
       'avatar name' auto
       'avatar role' auto
+
       / auto 1fr;
     p {
       margin: 0;
     }
+
     .name {
       grid-area: name;
       align-self: flex-end;
@@ -568,9 +545,11 @@ useSeoMeta({
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   h3 {
     margin: 0;
   }
+
   a {
     display: flex;
     align-items: center;
@@ -578,25 +557,30 @@ useSeoMeta({
     color: var(--color-blue);
   }
 }
+
 .project-overview {
   gap: var(--gap-md);
   padding: var(--gap-xl);
+
   .project-card {
     padding: 0;
     border-radius: 0;
     background-color: transparent;
     box-shadow: none;
+
     :deep(.title) {
       font-size: var(--font-size-nm) !important;
     }
   }
 }
+
 .popout-heading {
   padding: var(--gap-sm) var(--gap-md);
   margin: 0;
   font-size: var(--font-size-md);
   color: var(--color-text);
 }
+
 .popout-checkbox {
   padding: var(--gap-sm) var(--gap-md);
 }

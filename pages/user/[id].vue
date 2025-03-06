@@ -17,19 +17,11 @@
             {{ user.username }}
           </h1>
           <div class="card__overlay">
-            <NuxtLink
-              v-if="auth.user && auth.user.id === user.id"
-              to="/settings/profile"
-              class="iconified-button"
-            >
+            <NuxtLink v-if="auth.user && auth.user.id === user.id" to="/settings/profile" class="iconified-button">
               <EditIcon />
               {{ formatMessage(commonMessages.editButton) }}
             </NuxtLink>
-            <button
-              v-else-if="auth.user"
-              class="iconified-button"
-              @click="() => reportUser(user.id)"
-            >
+            <button v-else-if="auth.user" class="iconified-button" @click="() => reportUser(user.id)">
               <ReportIcon aria-hidden="true" />
               {{ formatMessage(messages.profileReportButton) }}
             </button>
@@ -47,10 +39,8 @@
           <div class="primary-stat">
             <DownloadIcon class="primary-stat__icon" aria-hidden="true" />
             <div class="primary-stat__text">
-              <IntlFormatted
-                :message-id="messages.profileDownloadsStats"
-                :values="{ count: formatCompactNumber(sumDownloads) }"
-              >
+              <IntlFormatted :message-id="messages.profileDownloadsStats"
+                :values="{ count: formatCompactNumber(sumDownloads) }">
                 <template #stat="{ children }">
                   <span class="primary-stat__counter">
                     <component :is="() => normalizeChildren(children)" />
@@ -62,10 +52,8 @@
           <div class="primary-stat">
             <HeartIcon class="primary-stat__icon" aria-hidden="true" />
             <div class="primary-stat__text">
-              <IntlFormatted
-                :message-id="messages.profileProjectsFollowersStats"
-                :values="{ count: formatCompactNumber(sumFollows) }"
-              >
+              <IntlFormatted :message-id="messages.profileProjectsFollowersStats"
+                :values="{ count: formatCompactNumber(sumFollows) }">
                 <template #stat="{ children }">
                   <span class="primary-stat__counter">
                     <component :is="() => normalizeChildren(children)" />
@@ -76,15 +64,11 @@
           </div>
           <div class="stats-block__item secondary-stat">
             <SunriseIcon class="secondary-stat__icon" aria-hidden="true" />
-            <span
-              v-tooltip="
-                formatMessage(commonMessages.dateAtTimeTooltip, {
-                  date: new Date(user.created),
-                  time: new Date(user.created),
-                })
-              "
-              class="secondary-stat__text date"
-            >
+            <span v-tooltip="formatMessage(commonMessages.dateAtTimeTooltip, {
+              date: new Date(user.created),
+              time: new Date(user.created),
+            })
+              " class="secondary-stat__text date">
               {{
                 formatMessage(messages.profileJoinedAt, { ago: formatRelativeTime(user.created) })
               }}
@@ -106,13 +90,8 @@
             <div class="stats-block__item">
               <IntlFormatted :message-id="messages.profileOrganizations" />
               <div class="organizations-grid">
-                <nuxt-link
-                  v-for="org in organizations"
-                  :key="org.id"
-                  v-tooltip="org.name"
-                  class="organization"
-                  :to="`/organization/${org.slug}`"
-                >
+                <nuxt-link v-for="org in organizations" :key="org.id" v-tooltip="org.name" class="organization"
+                  :to="`/organization/${org.slug}`">
                   <Avatar :src="org.icon_url" :alt="'Icon for ' + org.name" size="xs" />
                 </nuxt-link>
               </div>
@@ -121,42 +100,28 @@
         </div>
       </div>
       <div class="normal-page__content">
-        <Promotion />
+
         <nav class="navigation-card">
-          <NavRow
-            :links="[
-              {
-                label: formatMessage(commonMessages.allProjectType),
-                href: `/user/${user.username}`,
-              },
-              ...projectTypes.map((x) => {
-                return {
-                  label: formatMessage(getProjectTypeMessage(x, true)),
-                  href: `/user/${user.username}/${x}s`,
-                }
-              }),
-            ]"
-          />
+          <NavRow :links="[
+            {
+              label: formatMessage(commonMessages.allProjectType),
+              href: `/user/${user.username}`,
+            },
+            ...projectTypes.map((x) => {
+              return {
+                label: formatMessage(getProjectTypeMessage(x, true)),
+                href: `/user/${user.username}/${x}s`,
+              }
+            }),
+          ]" />
           <div class="input-group">
-            <NuxtLink
-              v-if="auth.user && auth.user.id === user.id"
-              class="iconified-button"
-              to="/dashboard/projects"
-            >
+            <NuxtLink v-if="auth.user && auth.user.id === user.id" class="iconified-button" to="/dashboard/projects">
               <SettingsIcon />
               {{ formatMessage(messages.profileManageProjectsButton) }}
             </NuxtLink>
-            <button
-              v-if="route.params.projectType !== 'collections'"
-              v-tooltip="
-                formatMessage(commonMessages[`${cosmetics.searchDisplayMode.user}InputView`])
-              "
-              :aria-label="
-                formatMessage(commonMessages[`${cosmetics.searchDisplayMode.user}InputView`])
-              "
-              class="square-button"
-              @click="cycleSearchDisplayMode()"
-            >
+            <button v-if="route.params.projectType !== 'collections'" v-tooltip="formatMessage(commonMessages[`${cosmetics.searchDisplayMode.user}InputView`])
+              " :aria-label="formatMessage(commonMessages[`${cosmetics.searchDisplayMode.user}InputView`])
+                " class="square-button" @click="cycleSearchDisplayMode()">
               <GridIcon v-if="cosmetics.searchDisplayMode.user === 'grid'" />
               <ImageIcon v-else-if="cosmetics.searchDisplayMode.user === 'gallery'" />
               <ListIcon v-else />
@@ -164,43 +129,27 @@
           </div>
         </nav>
         <div v-if="projects.length > 0">
-          <div
-            v-if="route.params.projectType !== 'collections'"
-            :class="'project-list display-mode--' + cosmetics.searchDisplayMode.user"
-          >
-            <ProjectCard
-              v-for="project in (route.params.projectType !== undefined
-                ? projects.filter(
-                    (x) =>
-                      x.project_type ===
-                      route.params.projectType.substr(0, route.params.projectType.length - 1)
-                  )
-                : projects
+          <div v-if="route.params.projectType !== 'collections'"
+            :class="'project-list display-mode--' + cosmetics.searchDisplayMode.user">
+            <ProjectCard v-for="project in (route.params.projectType !== undefined
+              ? projects.filter(
+                (x) =>
+                  x.project_type ===
+                  route.params.projectType.substr(0, route.params.projectType.length - 1)
               )
-                .slice()
-                .sort((a, b) => b.downloads - a.downloads)"
-              :id="project.slug || project.id"
-              :key="project.id"
-              :name="project.title"
-              :display="cosmetics.searchDisplayMode.user"
+              : projects
+            )
+              .slice()
+              .sort((a, b) => b.downloads - a.downloads)" :id="project.slug || project.id" :key="project.id"
+              :name="project.title" :display="cosmetics.searchDisplayMode.user"
               :featured-image="project.gallery.find((element) => element.featured)?.url"
-              :description="project.description"
-              :created-at="project.published"
-              :updated-at="project.updated"
-              :downloads="project.downloads.toString()"
-              :follows="project.followers.toString()"
-              :icon-url="project.icon_url"
-              :categories="project.categories"
-              :client-side="project.client_side"
-              :server-side="project.server_side"
-              :status="
-                auth.user && (auth.user.id === user.id || tags.staffRoles.includes(auth.user.role))
+              :description="project.description" :created-at="project.published" :updated-at="project.updated"
+              :downloads="project.downloads.toString()" :follows="project.followers.toString()"
+              :icon-url="project.icon_url" :categories="project.categories" :client-side="project.client_side"
+              :server-side="project.server_side" :status="auth.user && (auth.user.id === user.id || tags.staffRoles.includes(auth.user.role))
                   ? project.status
                   : null
-              "
-              :type="project.project_type"
-              :color="project.color"
-            />
+                " :type="project.project_type" :color="project.color" />
           </div>
         </div>
         <div v-else-if="route.params.projectType !== 'collections'" class="error">
@@ -217,12 +166,8 @@
           <span v-else class="text">{{ formatMessage(messages.profileNoProjectsLabel) }}</span>
         </div>
         <div v-if="['collections'].includes(route.params.projectType)" class="collections-grid">
-          <nuxt-link
-            v-for="collection in collections"
-            :key="collection.id"
-            :to="`/collection/${collection.id}`"
-            class="card collection-item"
-          >
+          <nuxt-link v-for="collection in collections" :key="collection.id" :to="`/collection/${collection.id}`"
+            class="card collection-item">
             <div class="collection">
               <Avatar :src="collection.icon_url" class="icon" />
               <div class="details">
@@ -237,7 +182,9 @@
               {{ collection.description }}
             </div>
             <div class="stat-bar">
-              <div class="stats"><BoxIcon /> {{ collection.projects?.length || 0 }} projects</div>
+              <div class="stats">
+                <BoxIcon /> {{ collection.projects?.length || 0 }} projects
+              </div>
               <div class="stats">
                 <template v-if="collection.status === 'listed'">
                   <WorldIcon />
@@ -259,10 +206,7 @@
             </div>
           </nuxt-link>
         </div>
-        <div
-          v-if="route.params.projectType === 'collections' && collections.length === 0"
-          class="error"
-        >
+        <div v-if="route.params.projectType === 'collections' && collections.length === 0" class="error">
           <UpToDate class="icon" /><br />
           <span v-if="auth.user && auth.user.id === user.id" class="preserve-lines text">
             <IntlFormatted :message-id="messages.profileNoCollectionsAuthLabel">
@@ -435,9 +379,9 @@ const title = computed(() => `${user.value.username} - Modrinth`)
 const description = computed(() =>
   user.value.bio
     ? formatMessage(messages.profileMetaDescriptionWithBio, {
-        bio: user.value.bio,
-        username: user.value.username,
-      })
+      bio: user.value.bio,
+      username: user.value.username,
+    })
     : formatMessage(messages.profileMetaDescription, { username: user.value.username })
 )
 

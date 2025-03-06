@@ -1,14 +1,8 @@
 <template>
   <div>
-    <ModalConfirm
-      v-if="auth.user && auth.user.id === creator.id"
-      ref="deleteModal"
-      :title="formatMessage(messages.deleteModalTitle)"
-      :description="formatMessage(messages.deleteModalDescription)"
-      :has-to-type="false"
-      :proceed-label="formatMessage(commonMessages.deleteLabel)"
-      @proceed="deleteCollection()"
-    />
+    <ModalConfirm v-if="auth.user && auth.user.id === creator.id" ref="deleteModal"
+      :title="formatMessage(messages.deleteModalTitle)" :description="formatMessage(messages.deleteModalDescription)"
+      :has-to-type="false" :proceed-label="formatMessage(commonMessages.deleteLabel)" @proceed="deleteCollection()" />
     <div class="normal-page">
       <div class="normal-page__sidebar">
         <div class="card">
@@ -28,30 +22,19 @@
                 <EditIcon /> {{ formatMessage(messages.editIconButton) }}
                 <template #menu>
                   <span class="icon-edit-menu">
-                    <FileInput
-                      id="project-icon"
-                      :max-size="262144"
-                      :show-icon="true"
-                      accept="image/png,image/jpeg,image/gif,image/webp"
-                      class="btn btn-transparent upload"
-                      style="white-space: nowrap"
-                      prompt=""
-                      @change="showPreviewImage"
-                    >
+                    <FileInput id="project-icon" :max-size="262144" :show-icon="true"
+                      accept="image/png,image/jpeg,image/gif,image/webp" class="btn btn-transparent upload"
+                      style="white-space: nowrap" prompt="" @change="showPreviewImage">
                       <UploadIcon />
                       {{ formatMessage(messages.uploadIconButton) }}
                     </FileInput>
-                    <Button
-                      v-if="!deletedIcon && (previewImage || collection.icon_url)"
-                      style="white-space: nowrap"
-                      transparent
-                      @click="
+                    <Button v-if="!deletedIcon && (previewImage || collection.icon_url)" style="white-space: nowrap"
+                      transparent @click="
                         () => {
                           deletedIcon = true
                           previewImage = null
                         }
-                      "
-                    >
+                      ">
                       <TrashIcon />
                       {{ formatMessage(messages.deleteIconButton) }}
                     </Button>
@@ -64,10 +47,7 @@
           <template v-if="isEditing">
             <div class="inputs universal-labels">
               <div class="avatar-section">
-                <Avatar
-                  size="md"
-                  :src="deletedIcon ? null : previewImage ? previewImage : collection.icon_url"
-                />
+                <Avatar size="md" :src="deletedIcon ? null : previewImage ? previewImage : collection.icon_url" />
               </div>
               <label for="collection-title">
                 <span class="label__title"> {{ formatMessage(commonMessages.titleLabel) }} </span>
@@ -86,20 +66,12 @@
                   {{ formatMessage(commonMessages.visibilityLabel) }}
                 </span>
               </label>
-              <DropdownSelect
-                id="visibility"
-                v-model="visibility"
-                :options="['listed', 'unlisted', 'private']"
-                :disabled="visibility === 'rejected'"
-                :multiple="false"
-                :display-name="
-                  (s) => {
+              <DropdownSelect id="visibility" v-model="visibility" :options="['listed', 'unlisted', 'private']"
+                :disabled="visibility === 'rejected'" :multiple="false" :display-name="(s) => {
                     if (s === 'listed') return formatMessage(commonMessages.publicLabel)
                     return formatMessage(commonMessages[`${s}Label`])
                   }
-                "
-                :searchable="false"
-              />
+                  " :searchable="false" />
             </div>
             <div class="push-right input-group">
               <Button @click="isEditing = false">
@@ -164,10 +136,8 @@
               <div class="primary-stat">
                 <LibraryIcon class="primary-stat__icon" aria-hidden="true" />
                 <div v-if="projects" class="primary-stat__text">
-                  <IntlFormatted
-                    :message-id="messages.projectsCountLabel"
-                    :values="{ count: formatCompactNumber(projects.length || 0) }"
-                  >
+                  <IntlFormatted :message-id="messages.projectsCountLabel"
+                    :values="{ count: formatCompactNumber(projects.length || 0) }">
                     <template #stat="{ children }">
                       <span class="primary-stat__counter">
                         <component :is="() => normalizeChildren(children)" />
@@ -178,15 +148,11 @@
               </div>
 
               <div class="metadata-item">
-                <div
-                  v-tooltip="
-                    formatMessage(commonMessages.dateAtTimeTooltip, {
-                      date: new Date(collection.created),
-                      time: new Date(collection.created),
-                    })
-                  "
-                  class="date"
-                >
+                <div v-tooltip="formatMessage(commonMessages.dateAtTimeTooltip, {
+                  date: new Date(collection.created),
+                  time: new Date(collection.created),
+                })
+                  " class="date">
                   <CalendarIcon />
                   <label>
                     {{
@@ -199,15 +165,11 @@
               </div>
 
               <div v-if="collection.id !== 'following'" class="metadata-item">
-                <div
-                  v-tooltip="
-                    formatMessage(commonMessages.dateAtTimeTooltip, {
-                      date: new Date(collection.updated),
-                      time: new Date(collection.updated),
-                    })
-                  "
-                  class="date"
-                >
+                <div v-tooltip="formatMessage(commonMessages.dateAtTimeTooltip, {
+                  date: new Date(collection.updated),
+                  time: new Date(collection.updated),
+                })
+                  " class="date">
                   <UpdatedIcon />
                   <label>
                     {{
@@ -225,10 +187,7 @@
             <div class="collection-info">
               <h2 class="card-header">{{ formatMessage(messages.curatedByLabel) }}</h2>
               <div class="metadata-item">
-                <nuxt-link
-                  class="team-member columns button-transparent"
-                  :to="'/user/' + creator.username"
-                >
+                <nuxt-link class="team-member columns button-transparent" :to="'/user/' + creator.username">
                   <Avatar :src="creator.avatar_url" :alt="creator.username" size="sm" circle />
 
                   <div class="member-info">
@@ -249,96 +208,64 @@
         </div>
       </div>
       <div class="normal-page__content">
-        <Promotion />
+
 
         <nav class="navigation-card">
-          <NavRow
-            :links="[
-              {
-                label: formatMessage(commonMessages.allProjectType),
-                href: `/collection/${collection.id}`,
-              },
-              ...projectTypes.map((x) => {
-                return {
-                  label: formatMessage(getProjectTypeMessage(x, true)),
-                  href: `/collection/${collection.id}/${x}s`,
-                }
-              }),
-            ]"
-          />
-          <button
-            v-tooltip="
-              formatMessage(
-                commonMessages[`${cosmetics.searchDisplayMode.collection || 'list'}InputView`]
-              )
-            "
-            :aria-label="
-              formatMessage(
-                commonMessages[`${cosmetics.searchDisplayMode.collection || 'list'}InputView`]
-              )
-            "
-            class="square-button"
-            @click="cycleSearchDisplayMode()"
-          >
+          <NavRow :links="[
+            {
+              label: formatMessage(commonMessages.allProjectType),
+              href: `/collection/${collection.id}`,
+            },
+            ...projectTypes.map((x) => {
+              return {
+                label: formatMessage(getProjectTypeMessage(x, true)),
+                href: `/collection/${collection.id}/${x}s`,
+              }
+            }),
+          ]" />
+          <button v-tooltip="formatMessage(
+            commonMessages[`${cosmetics.searchDisplayMode.collection || 'list'}InputView`]
+          )
+            " :aria-label="formatMessage(
+              commonMessages[`${cosmetics.searchDisplayMode.collection || 'list'}InputView`]
+            )
+              " class="square-button" @click="cycleSearchDisplayMode()">
             <GridIcon v-if="cosmetics.searchDisplayMode.collection === 'grid'" />
             <ImageIcon v-else-if="cosmetics.searchDisplayMode.collection === 'gallery'" />
             <ListIcon v-else />
           </button>
         </nav>
 
-        <div
-          v-if="projects && projects?.length > 0"
-          :class="
-            'project-list display-mode--' + (cosmetics.searchDisplayMode.collection || 'list')
-          "
-        >
-          <ProjectCard
-            v-for="project in (route.params.projectType !== undefined
-              ? projects.filter(
-                  (x) =>
-                    x.project_type ===
-                    route.params.projectType.substr(0, route.params.projectType.length - 1)
-                )
-              : projects
+        <div v-if="projects && projects?.length > 0" :class="'project-list display-mode--' + (cosmetics.searchDisplayMode.collection || 'list')
+          ">
+          <ProjectCard v-for="project in (route.params.projectType !== undefined
+            ? projects.filter(
+              (x) =>
+                x.project_type ===
+                route.params.projectType.substr(0, route.params.projectType.length - 1)
             )
-              .slice()
-              .sort((a, b) => b.downloads - a.downloads)"
-            :id="project.id"
-            :key="project.id"
-            :type="project.project_type"
-            :categories="project.categories"
-            :created-at="project.published"
-            :updated-at="project.updated"
-            :description="project.description"
+            : projects
+          )
+            .slice()
+            .sort((a, b) => b.downloads - a.downloads)" :id="project.id" :key="project.id"
+            :type="project.project_type" :categories="project.categories" :created-at="project.published"
+            :updated-at="project.updated" :description="project.description"
             :downloads="project.downloads ? project.downloads.toString() : '0'"
             :follows="project.followers ? project.followers.toString() : '0'"
-            :featured-image="project.gallery.find((element) => element.featured)?.url"
-            :icon-url="project.icon_url"
-            :name="project.title"
-            :client-side="project.client_side"
-            :server-side="project.server_side"
-            :color="project.color"
-            :show-updated-date="!canEdit && collection.id !== 'following'"
-            :show-created-date="!canEdit && collection.id !== 'following'"
-          >
-            <button
-              v-if="canEdit"
-              class="iconified-button remove-btn"
-              @click="
-                () => {
-                  removeProjects = [project]
-                  saveChanges()
-                }
-              "
-            >
+            :featured-image="project.gallery.find((element) => element.featured)?.url" :icon-url="project.icon_url"
+            :name="project.title" :client-side="project.client_side" :server-side="project.server_side"
+            :color="project.color" :show-updated-date="!canEdit && collection.id !== 'following'"
+            :show-created-date="!canEdit && collection.id !== 'following'">
+            <button v-if="canEdit" class="iconified-button remove-btn" @click="
+              () => {
+                removeProjects = [project]
+                saveChanges()
+              }
+            ">
               <TrashIcon />
               {{ formatMessage(messages.removeProjectButton) }}
             </button>
-            <button
-              v-if="collection.id === 'following'"
-              class="iconified-button"
-              @click="unfollowProject(project)"
-            >
+            <button v-if="collection.id === 'following'" class="iconified-button" @click="unfollowProject(project)">
               <TrashIcon />
               {{ formatMessage(messages.unfollowProjectButton) }}
             </button>
@@ -509,50 +436,50 @@ try {
       created: auth.value.user.created,
       updated: auth.value.user.created,
     })
-    ;[{ data: projects, refresh: refreshProjects }] = await Promise.all([
-      useAsyncData(
-        `user/${auth.value.user.id}/follows`,
-        () => useBaseFetch(`user/${auth.value.user.id}/follows`),
-        {
-          transform: (projects) => {
-            for (const project of projects) {
-              project.categories = project.categories.concat(project.loaders)
-            }
+      ;[{ data: projects, refresh: refreshProjects }] = await Promise.all([
+        useAsyncData(
+          `user/${auth.value.user.id}/follows`,
+          () => useBaseFetch(`user/${auth.value.user.id}/follows`),
+          {
+            transform: (projects) => {
+              for (const project of projects) {
+                project.categories = project.categories.concat(project.loaders)
+              }
 
-            return projects
-          },
-        }
-      ),
-    ])
+              return projects
+            },
+          }
+        ),
+      ])
     creator = ref(auth.value.user)
-    refreshCollection = async () => {}
+    refreshCollection = async () => { }
   } else {
     const val = await useAsyncData(`collection/${route.params.id}`, () =>
       useBaseFetch(`collection/${route.params.id}`, { apiVersion: 3 })
     )
     collection = val.data
     refreshCollection = val.refresh
-    ;[{ data: creator }, { data: projects, refresh: refreshProjects }] = await Promise.all([
-      await useAsyncData(`user/${collection.value.user}`, () =>
-        useBaseFetch(`user/${collection.value.user}`)
-      ),
-      await useAsyncData(
-        `projects?ids=${encodeURIComponent(JSON.stringify(collection.value.projects))}]`,
-        () =>
-          useBaseFetch(
-            `projects?ids=${encodeURIComponent(JSON.stringify(collection.value.projects))}`
-          ),
-        {
-          transform: (projects) => {
-            for (const project of projects) {
-              project.categories = project.categories.concat(project.loaders)
-            }
+      ;[{ data: creator }, { data: projects, refresh: refreshProjects }] = await Promise.all([
+        await useAsyncData(`user/${collection.value.user}`, () =>
+          useBaseFetch(`user/${collection.value.user}`)
+        ),
+        await useAsyncData(
+          `projects?ids=${encodeURIComponent(JSON.stringify(collection.value.projects))}]`,
+          () =>
+            useBaseFetch(
+              `projects?ids=${encodeURIComponent(JSON.stringify(collection.value.projects))}`
+            ),
+          {
+            transform: (projects) => {
+              for (const project of projects) {
+                project.categories = project.categories.concat(project.loaders)
+              }
 
-            return projects
-          },
-        }
-      ),
-    ])
+              return projects
+            },
+          }
+        ),
+      ])
   }
 } catch (err) {
   console.error(err)

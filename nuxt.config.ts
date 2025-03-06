@@ -46,330 +46,340 @@ const localesCategoriesOverrides: Partial<Record<string, 'fun' | 'experimental'>
 }
 
 export default defineNuxtConfig({
-  app: {
-    head: {
-      htmlAttrs: {
-        lang: 'en',
-      },
-      title: 'Modrinth',
-      link: [
-        // The type is necessary because the linter can't always compare this very nested/complex type on itself
-        ...preloadedFonts.map((font): object => {
-          return {
-            rel: 'preload',
-            href: `https://cdn-raw.modrinth.com/fonts/${font}?v=3.19`,
-            as: 'font',
-            type: 'font/woff2',
-            crossorigin: 'anonymous',
-          }
-        }),
-        ...Object.entries(favicons).map(([media, href]): object => {
-          return { rel: 'icon', type: 'image/x-icon', href, media }
-        }),
-        ...Object.entries(favicons).map(([media, href]): object => {
-          return { rel: 'apple-touch-icon', type: 'image/x-icon', href, media, sizes: '64x64' }
-        }),
-        {
-          rel: 'search',
-          type: 'application/opensearchdescription+xml',
-          href: '/opensearch.xml',
-          title: 'Modrinth mods',
-        },
-      ],
-    },
-  },
-  vite: {
-    plugins: [
-      svgLoader({
-        svgoConfig: {
-          plugins: [
-            {
-              name: 'preset-default',
-              params: {
-                overrides: {
-                  removeViewBox: false,
-                },
-              },
-            },
-          ],
-        },
-      }),
-    ],
-  },
-  hooks: {
-    async 'build:before'() {
-      // 30 minutes
-      const TTL = 30 * 60 * 1000
+ app: {
+   head: {
+     htmlAttrs: {
+       lang: 'en',
+     },
+     title: 'Modrinth',
+     link: [
+       // The type is necessary because the linter can't always compare this very nested/complex type on itself
+       ...preloadedFonts.map((font): object => {
+         return {
+           rel: 'preload',
+           href: `https://cdn-raw.modrinth.com/fonts/${font}?v=3.19`,
+           as: 'font',
+           type: 'font/woff2',
+           crossorigin: 'anonymous',
+         }
+       }),
+       ...Object.entries(favicons).map(([media, href]): object => {
+         return { rel: 'icon', type: 'image/x-icon', href, media }
+       }),
+       ...Object.entries(favicons).map(([media, href]): object => {
+         return { rel: 'apple-touch-icon', type: 'image/x-icon', href, media, sizes: '64x64' }
+       }),
+       {
+         rel: 'search',
+         type: 'application/opensearchdescription+xml',
+         href: '/opensearch.xml',
+         title: 'Modrinth mods',
+       },
+     ],
+   },
+ },
 
-      let state: {
-        lastGenerated?: string
-        apiUrl?: string
-        categories?: any[]
-        loaders?: any[]
-        gameVersions?: any[]
-        donationPlatforms?: any[]
-        reportTypes?: any[]
-      } = {}
+ vite: {
+   plugins: [
+     svgLoader({
+       svgoConfig: {
+         plugins: [
+           {
+             name: 'preset-default',
+             params: {
+               overrides: {
+                 removeViewBox: false,
+               },
+             },
+           },
+         ],
+       },
+     }),
+   ],
+ },
 
-      try {
-        state = JSON.parse(await fs.readFile('./generated/state.json', 'utf8'))
-      } catch {
-        // File doesn't exist, create folder
-        await fs.mkdir('./generated', { recursive: true })
-      }
+ hooks: {
+   async 'build:before'() {
+     // 30 minutes
+     const TTL = 30 * 60 * 1000
 
-      const API_URL = getApiUrl()
+     let state: {
+       lastGenerated?: string
+       apiUrl?: string
+       categories?: any[]
+       loaders?: any[]
+       gameVersions?: any[]
+       donationPlatforms?: any[]
+       reportTypes?: any[]
+     } = {}
 
-      if (
-        // Skip regeneration if within TTL...
-        state.lastGenerated &&
-        new Date(state.lastGenerated).getTime() + TTL > new Date().getTime() &&
-        // ...but only if the API URL is the same
-        state.apiUrl === API_URL
-      ) {
-        return
-      }
+     try {
+       state = JSON.parse(await fs.readFile('./generated/state.json', 'utf8'))
+     } catch {
+       // File doesn't exist, create folder
+       await fs.mkdir('./generated', { recursive: true })
+     }
 
-      state.lastGenerated = new Date().toISOString()
+     const API_URL = getApiUrl()
 
-      state.apiUrl = API_URL
+     if (
+       // Skip regeneration if within TTL...
+       state.lastGenerated &&
+       new Date(state.lastGenerated).getTime() + TTL > new Date().getTime() &&
+       // ...but only if the API URL is the same
+       state.apiUrl === API_URL
+     ) {
+       return
+     }
 
-      const headers = {
-        headers: {
-          'user-agent': 'Knossos generator (support@modrinth.com)',
-        },
-      }
+     state.lastGenerated = new Date().toISOString()
 
-      const [categories, loaders, gameVersions, donationPlatforms, reportTypes] = await Promise.all(
-        [
-          $fetch(`${API_URL}tag/category`, headers),
-          $fetch(`${API_URL}tag/loader`, headers),
-          $fetch(`${API_URL}tag/game_version`, headers),
-          $fetch(`${API_URL}tag/donation_platform`, headers),
-          $fetch(`${API_URL}tag/report_type`, headers),
-        ]
-      )
+     state.apiUrl = API_URL
 
-      state.categories = categories
-      state.loaders = loaders
-      state.gameVersions = gameVersions
-      state.donationPlatforms = donationPlatforms
-      state.reportTypes = reportTypes
+     const headers = {
+       headers: {
+         'user-agent': 'Knossos generator (support@modrinth.com)',
+       },
+     }
 
-      await fs.writeFile('./generated/state.json', JSON.stringify(state))
+     const [categories, loaders, gameVersions, donationPlatforms, reportTypes] = await Promise.all(
+       [
+         $fetch(`${API_URL}tag/category`, headers),
+         $fetch(`${API_URL}tag/loader`, headers),
+         $fetch(`${API_URL}tag/game_version`, headers),
+         $fetch(`${API_URL}tag/donation_platform`, headers),
+         $fetch(`${API_URL}tag/report_type`, headers),
+       ]
+     )
 
-      console.log('Tags generated!')
-    },
-    'pages:extend'(routes) {
-      routes.splice(
-        routes.findIndex((x) => x.name === 'search-searchProjectType'),
-        1
-      )
+     state.categories = categories
+     state.loaders = loaders
+     state.gameVersions = gameVersions
+     state.donationPlatforms = donationPlatforms
+     state.reportTypes = reportTypes
 
-      const types = ['mods', 'modpacks', 'plugins', 'resourcepacks', 'shaders', 'datapacks']
+     await fs.writeFile('./generated/state.json', JSON.stringify(state))
 
-      types.forEach((type) =>
-        routes.push({
-          name: `search-${type}`,
-          path: `/${type}`,
-          file: resolve(__dirname, 'pages/search/[searchProjectType].vue'),
-          children: [],
-        })
-      )
-    },
-    async 'vintl:extendOptions'(opts) {
-      opts.locales ??= []
+     console.log('Tags generated!')
+   },
+   'pages:extend'(routes) {
+     routes.splice(
+       routes.findIndex((x) => x.name === 'search-searchProjectType'),
+       1
+     )
 
-      const isProduction = getDomain() === 'https://modrinth.com'
+     const types = ['mods', 'modpacks', 'plugins', 'resourcepacks', 'shaders', 'datapacks']
 
-      const resolveCompactNumberDataImport = await (async () => {
-        const compactNumberLocales: string[] = []
+     types.forEach((type) =>
+       routes.push({
+         name: `search-${type}`,
+         path: `/${type}`,
+         file: resolve(__dirname, 'pages/search/[searchProjectType].vue'),
+         children: [],
+       })
+     )
+   },
+   async 'vintl:extendOptions'(opts) {
+     opts.locales ??= []
 
-        for await (const localeFile of globIterate(
-          'node_modules/@vintl/compact-number/dist/locale-data/*.mjs',
-          { ignore: '**/*.data.mjs' }
-        )) {
-          const tag = basename(localeFile, '.mjs')
-          compactNumberLocales.push(tag)
-        }
+     const isProduction = getDomain() === 'https://modrinth.com'
 
-        function resolveImport(tag: string) {
-          const matchedTag = matchLocale([tag], compactNumberLocales, 'en-x-placeholder')
-          return matchedTag === 'en-x-placeholder'
-            ? undefined
-            : `@vintl/compact-number/locale-data/${matchedTag}`
-        }
+     const resolveCompactNumberDataImport = await (async () => {
+       const compactNumberLocales: string[] = []
 
-        return resolveImport
-      })()
+       for await (const localeFile of globIterate(
+         'node_modules/@vintl/compact-number/dist/locale-data/*.mjs',
+         { ignore: '**/*.data.mjs' }
+       )) {
+         const tag = basename(localeFile, '.mjs')
+         compactNumberLocales.push(tag)
+       }
 
-      const resolveOmorphiaLocaleImport = await (async () => {
-        const omorphiaLocales: string[] = []
-        const omorphiaLocaleSets = new Map<string, { files: { from: string }[] }>()
+       function resolveImport(tag: string) {
+         const matchedTag = matchLocale([tag], compactNumberLocales, 'en-x-placeholder')
+         return matchedTag === 'en-x-placeholder'
+           ? undefined
+           : `@vintl/compact-number/locale-data/${matchedTag}`
+       }
 
-        for await (const localeDir of globIterate('node_modules/omorphia/locales/*', {
-          posix: true,
-        })) {
-          const tag = basename(localeDir)
-          omorphiaLocales.push(tag)
+       return resolveImport
+     })()
 
-          const localeFiles: { from: string; format?: string }[] = []
+     const resolveOmorphiaLocaleImport = await (async () => {
+       const omorphiaLocales: string[] = []
+       const omorphiaLocaleSets = new Map<string, { files: { from: string }[] }>()
 
-          omorphiaLocaleSets.set(tag, { files: localeFiles })
+       for await (const localeDir of globIterate('node_modules/omorphia/locales/*', {
+         posix: true,
+       })) {
+         const tag = basename(localeDir)
+         omorphiaLocales.push(tag)
 
-          for await (const localeFile of globIterate(`${localeDir}/*`, { posix: true })) {
-            localeFiles.push({
-              from: pathToFileURL(localeFile).toString(),
-              format: 'default',
-            })
-          }
-        }
+         const localeFiles: { from: string; format?: string }[] = []
 
-        return function resolveLocaleImport(tag: string) {
-          return omorphiaLocaleSets.get(matchLocale([tag], omorphiaLocales, 'en-x-placeholder'))
-        }
-      })()
+         omorphiaLocaleSets.set(tag, { files: localeFiles })
 
-      for await (const localeDir of globIterate('locales/*/', { posix: true })) {
-        const tag = basename(localeDir)
-        if (isProduction && !enabledLocales.includes(tag) && opts.defaultLocale !== tag) continue
+         for await (const localeFile of globIterate(`${localeDir}/*`, { posix: true })) {
+           localeFiles.push({
+             from: pathToFileURL(localeFile).toString(),
+             format: 'default',
+           })
+         }
+       }
 
-        const locale =
-          opts.locales.find((locale) => locale.tag === tag) ??
-          opts.locales[opts.locales.push({ tag }) - 1]
+       return function resolveLocaleImport(tag: string) {
+         return omorphiaLocaleSets.get(matchLocale([tag], omorphiaLocales, 'en-x-placeholder'))
+       }
+     })()
 
-        const localeFiles = (locale.files ??= [])
+     for await (const localeDir of globIterate('locales/*/', { posix: true })) {
+       const tag = basename(localeDir)
+       if (isProduction && !enabledLocales.includes(tag) && opts.defaultLocale !== tag) continue
 
-        for await (const localeFile of globIterate(`${localeDir}/*`, { posix: true })) {
-          const fileName = basename(localeFile)
-          if (fileName === 'index.json') {
-            localeFiles.push({
-              from: `./${localeFile}`,
-              format: 'crowdin',
-            })
-          } else if (fileName === 'meta.json') {
-            const meta: Record<string, { message: string }> = await fs
-              .readFile(localeFile, 'utf8')
-              .then((date) => JSON.parse(date))
-            locale.meta ??= {}
-            for (const key in meta) {
-              locale.meta[key] = meta[key].message
-            }
-          } else {
-            ;(locale.resources ??= {})[fileName] = `./${localeFile}`
-          }
-        }
+       const locale =
+         opts.locales.find((locale) => locale.tag === tag) ??
+         opts.locales[opts.locales.push({ tag }) - 1]
 
-        const categoryOverride = localesCategoriesOverrides[tag]
-        if (categoryOverride != null) {
-          ;(locale.meta ??= {}).category = categoryOverride
-        }
+       const localeFiles = (locale.files ??= [])
 
-        const omorphiaLocaleData = resolveOmorphiaLocaleImport(tag)
-        if (omorphiaLocaleData != null) {
-          localeFiles.push(...omorphiaLocaleData.files)
-        }
+       for await (const localeFile of globIterate(`${localeDir}/*`, { posix: true })) {
+         const fileName = basename(localeFile)
+         if (fileName === 'index.json') {
+           localeFiles.push({
+             from: `./${localeFile}`,
+             format: 'crowdin',
+           })
+         } else if (fileName === 'meta.json') {
+           const meta: Record<string, { message: string }> = await fs
+             .readFile(localeFile, 'utf8')
+             .then((date) => JSON.parse(date))
+           locale.meta ??= {}
+           for (const key in meta) {
+             locale.meta[key] = meta[key].message
+           }
+         } else {
+           ;(locale.resources ??= {})[fileName] = `./${localeFile}`
+         }
+       }
 
-        const cnDataImport = resolveCompactNumberDataImport(tag)
-        if (cnDataImport != null) {
-          ;(locale.additionalImports ??= []).push({
-            from: cnDataImport,
-            resolve: false,
-          })
-        }
-      }
-    },
-  },
-  runtimeConfig: {
-    // @ts-ignore
-    apiBaseUrl: process.env.BASE_URL ?? globalThis.BASE_URL ?? getApiUrl(),
-    // @ts-ignore
-    rateLimitKey: process.env.RATE_LIMIT_IGNORE_KEY ?? globalThis.RATE_LIMIT_IGNORE_KEY,
-    public: {
-      apiBaseUrl: getApiUrl(),
-      siteUrl: getDomain(),
-      production: isProduction(),
-      featureFlagOverrides: getFeatureFlagOverrides(),
+       const categoryOverride = localesCategoriesOverrides[tag]
+       if (categoryOverride != null) {
+         ;(locale.meta ??= {}).category = categoryOverride
+       }
 
-      owner: process.env.VERCEL_GIT_REPO_OWNER || 'modrinth',
-      slug: process.env.VERCEL_GIT_REPO_SLUG || 'knossos',
-      branch:
-        process.env.VERCEL_GIT_COMMIT_REF ||
-        process.env.CF_PAGES_BRANCH ||
-        // @ts-ignore
-        globalThis.CF_PAGES_BRANCH ||
-        'master',
-      hash:
-        process.env.VERCEL_GIT_COMMIT_SHA ||
-        process.env.CF_PAGES_COMMIT_SHA ||
-        // @ts-ignore
-        globalThis.CF_PAGES_COMMIT_SHA ||
-        'unknown',
+       const omorphiaLocaleData = resolveOmorphiaLocaleImport(tag)
+       if (omorphiaLocaleData != null) {
+         localeFiles.push(...omorphiaLocaleData.files)
+       }
 
-      turnstile: { siteKey: '0x4AAAAAAAW3guHM6Eunbgwu' },
-    },
-  },
-  typescript: {
-    shim: false,
-    strict: true,
-    typeCheck: true,
-    tsConfig: {
-      compilerOptions: {
-        moduleResolution: 'bundler',
-        allowImportingTsExtensions: true,
-      },
-    },
-  },
-  modules: ['@vintl/nuxt', '@nuxtjs/turnstile'],
-  vintl: {
-    defaultLocale: 'en-US',
-    locales: [
-      {
-        tag: 'en-US',
-        meta: {
-          static: {
-            iso: 'en',
-          },
-        },
-      },
-    ],
-    storage: 'cookie',
-    parserless: 'only-prod',
-    seo: {
-      defaultLocaleHasParameter: false,
-    },
-    onParseError({ error, message, messageId, moduleId, parseMessage, parserOptions }) {
-      const errorMessage = String(error)
-      const modulePath = relative(__dirname, moduleId)
+       const cnDataImport = resolveCompactNumberDataImport(tag)
+       if (cnDataImport != null) {
+         ;(locale.additionalImports ??= []).push({
+           from: cnDataImport,
+           resolve: false,
+         })
+       }
+     }
+   },
+ },
 
-      try {
-        const fallback = parseMessage(message, { ...parserOptions, ignoreTag: true })
+ runtimeConfig: {
+   // @ts-ignore
+   apiBaseUrl: process.env.BASE_URL ?? globalThis.BASE_URL ?? getApiUrl(),
+   // @ts-ignore
+   rateLimitKey: process.env.RATE_LIMIT_IGNORE_KEY ?? globalThis.RATE_LIMIT_IGNORE_KEY,
+   public: {
+     apiBaseUrl: getApiUrl(),
+     siteUrl: getDomain(),
+     production: isProduction(),
+     featureFlagOverrides: getFeatureFlagOverrides(),
 
-        consola.warn(
-          `[i18n] ${messageId} in ${modulePath} cannot be parsed normally due to ${errorMessage}. The tags will will not be parsed.`
-        )
+     owner: process.env.VERCEL_GIT_REPO_OWNER || 'modrinth',
+     slug: process.env.VERCEL_GIT_REPO_SLUG || 'knossos',
+     branch:
+       process.env.VERCEL_GIT_COMMIT_REF ||
+       process.env.CF_PAGES_BRANCH ||
+       // @ts-ignore
+       globalThis.CF_PAGES_BRANCH ||
+       'master',
+     hash:
+       process.env.VERCEL_GIT_COMMIT_SHA ||
+       process.env.CF_PAGES_COMMIT_SHA ||
+       // @ts-ignore
+       globalThis.CF_PAGES_COMMIT_SHA ||
+       'unknown',
 
-        return fallback
-      } catch (err) {
-        const secondaryErrorMessage = String(err)
+     turnstile: { siteKey: '0x4AAAAAAAW3guHM6Eunbgwu' },
+   },
+ },
 
-        const reason =
-          errorMessage === secondaryErrorMessage
-            ? errorMessage
-            : `${errorMessage} and ${secondaryErrorMessage}`
+ typescript: {
+   shim: false,
+   strict: true,
+   typeCheck: true,
+   tsConfig: {
+     compilerOptions: {
+       moduleResolution: 'bundler',
+       allowImportingTsExtensions: true,
+     },
+   },
+ },
 
-        consola.warn(
-          `[i18n] ${messageId} in ${modulePath} cannot be parsed due to ${reason}. It will be skipped.`
-        )
-      }
-    },
-  },
-  nitro: {
-    moduleSideEffects: ['@vintl/compact-number/locale-data'],
-  },
-  devtools: {
-    enabled: true,
-  },
+ modules: ['@vintl/nuxt', '@nuxtjs/turnstile'],
+
+ vintl: {
+   defaultLocale: 'en-US',
+   locales: [
+     {
+       tag: 'en-US',
+       meta: {
+         static: {
+           iso: 'en',
+         },
+       },
+     },
+   ],
+   storage: 'cookie',
+   parserless: 'only-prod',
+   seo: {
+     defaultLocaleHasParameter: false,
+   },
+   onParseError({ error, message, messageId, moduleId, parseMessage, parserOptions }) {
+     const errorMessage = String(error)
+     const modulePath = relative(__dirname, moduleId)
+
+     try {
+       const fallback = parseMessage(message, { ...parserOptions, ignoreTag: true })
+
+       consola.warn(
+         `[i18n] ${messageId} in ${modulePath} cannot be parsed normally due to ${errorMessage}. The tags will will not be parsed.`
+       )
+
+       return fallback
+     } catch (err) {
+       const secondaryErrorMessage = String(err)
+
+       const reason =
+         errorMessage === secondaryErrorMessage
+           ? errorMessage
+           : `${errorMessage} and ${secondaryErrorMessage}`
+
+       consola.warn(
+         `[i18n] ${messageId} in ${modulePath} cannot be parsed due to ${reason}. It will be skipped.`
+       )
+     }
+   },
+ },
+
+ nitro: {
+   moduleSideEffects: ['@vintl/compact-number/locale-data'],
+ },
+
+ devtools: {
+   enabled: true,
+ },
+
+ compatibilityDate: '2025-03-06'
 })
 
 function getApiUrl() {

@@ -2,16 +2,17 @@
   <div>
     <section class="universal-card">
       <h2>Revenue</h2>
-      <div v-if="auth.user.payout_data.balance >= minWithdraw">
+      <div v-if="userBalance.available >= minWithdraw || userBalance.pending >= minWithdraw">
         <p>
           You have
-          <strong>{{ $formatMoney(auth.user.payout_data.balance) }}</strong>
-          available to withdraw.
+          <strong>{{ $formatMoney(userBalance.available) }}</strong>
+          available to withdraw. <strong>{{ $formatMoney(userBalance.pending) }}</strong> of your
+          balance is <nuxt-link class="text-link" to="/legal/cmp-info#pending">pending</nuxt-link>.
         </p>
       </div>
       <p v-else>
         You have made
-        <strong>{{ $formatMoney(auth.user.payout_data.balance) }}</strong
+        <strong>{{ $formatMoney(userBalance.available) }}</strong
         >, which is under the minimum of ${{ minWithdraw }} to withdraw.
       </p>
       <div class="input-group">
@@ -79,6 +80,10 @@ import { TransferIcon, HistoryIcon, PayPalIcon, SaveIcon, XIcon } from 'omorphia
 
 const auth = await useAuth()
 const minWithdraw = ref(0.01)
+
+const { data: userBalance } = await useAsyncData(`payout/balance`, () =>
+  useBaseFetch(`payout/balance`, { apiVersion: 3 }),
+);
 
 async function updateVenmo() {
   startLoading()
