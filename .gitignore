@@ -83,3 +83,4 @@ sw.*
 
 # Vim swap files
 *.swp
+start.sh
