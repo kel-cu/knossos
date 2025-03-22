@@ -14,7 +14,7 @@
           <CompactChart
             v-if="analytics.formattedData.value.downloads"
             ref="tinyDownloadChart"
-            :title="`Downloads since ${dayjs(startDate).format('MMM D, YYYY')}`"
+            :title="`Downloads`"
             color="var(--color-brand)"
             :value="formatNumber(analytics.formattedData.value.downloads.sum, false)"
             :data="analytics.formattedData.value.downloads.chart.sumData"
@@ -33,7 +33,7 @@
           <CompactChart
             v-if="analytics.formattedData.value.views"
             ref="tinyViewChart"
-            :title="`Page views since ${dayjs(startDate).format('MMM D, YYYY')}`"
+            :title="`Views`"
             color="var(--color-blue)"
             :value="formatNumber(analytics.formattedData.value.views.sum, false)"
             :data="analytics.formattedData.value.views.chart.sumData"
@@ -50,7 +50,7 @@
           <CompactChart
             v-if="analytics.formattedData.value.revenue"
             ref="tinyRevenueChart"
-            :title="`Revenue since ${dayjs(startDate).format('MMM D, YYYY')}`"
+            :title="`Revenue`"
             color="var(--color-purple)"
             :value="formatMoney(analytics.formattedData.value.revenue.sum, false)"
             :data="analytics.formattedData.value.revenue.chart.sumData"
@@ -71,6 +71,9 @@
               <span class="label__title">
                 {{ formatCategoryHeader(selectedChart) }}
               </span>
+              <span class="label__subtitle">
+                {{ formattedCategorySubtitle }}
+              </span>
             </h2>
             <div class="chart-controls__buttons">
               <Button v-tooltip="'Toggle project colors'" icon-only @click="onToggleColors">
@@ -83,10 +86,13 @@
                 <UpdatedIcon />
               </Button>
               <DropdownSelect
+                class="range-dropdown"
                 v-model="selectedRange"
-                :options="selectableRanges"
+                :options="ranges"
                 name="Time range"
-                :display-name="(o: typeof selectableRanges[number] | undefined) => o?.label || 'Custom'"
+                :display-name="
+                  (o: RangeObject) => o?.getLabel([startDate, endDate]) ?? 'Loading...'
+                "
               />
             </div>
           </div>
@@ -132,7 +138,6 @@
                   :data="analytics.formattedData.value.revenue.chart.data"
                   :labels="analytics.formattedData.value.revenue.chart.labels"
                   is-money
-                  suffix="<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='2' x2='12' y2='22'></line><path d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'></path></svg>"
                   :colors="
                     isUsingProjectColors
                       ? analytics.formattedData.value.revenue.chart.colors
@@ -142,7 +147,7 @@
               </client-only>
             </div>
             <div class="legend">
-              <div class="legend__items">
+              <div class="legend__items" v-if="projects.length > 1">
                 <template v-for="project in selectedDataSetProjects" :key="project">
                   <button
                     v-tooltip="project.title"
@@ -160,7 +165,7 @@
                     <div
                       :style="{
                         '--color-brand': isUsingProjectColors
-                          ? intToRgba(project.color, project.id, theme ?? undefined)
+                          ? intToRgba(project.color, project.id, theme.active ?? undefined)
                           : getDefaultColor(project.id),
                       }"
                       class="legend__item__color"
@@ -191,15 +196,20 @@
                 class="country-value"
               >
                 <div class="country-flag-container">
-                  <img
-                    :src="
-                      name.toLowerCase() === 'xx' || !name
-                        ? 'https://cdn.modrinth.com/placeholder-banner.svg'
-                        : countryCodeToFlag(name)
-                    "
-                    alt="Hidden country"
-                    class="country-flag"
-                  />
+                  <template v-if="name.toLowerCase() === 'xx' || !name">
+                    <img
+                      src="https://cdn.modrinth.com/placeholder-banner.svg"
+                      alt="Placeholder flag"
+                      class="country-flag"
+                    />
+                  </template>
+                  <template v-else>
+                    <img
+                      :src="countryCodeToFlag(name)"
+                      :alt="`${countryCodeToName(name)}'s flag`"
+                      class="country-flag"
+                    />
+                  </template>
                 </div>
                 <div class="country-text">
                   <strong class="country-name"
@@ -218,7 +228,7 @@
                     :style="{
                       width: formatPercent(
                         count,
-                        analytics.formattedData.value.downloadsByCountry.sum
+                        analytics.formattedData.value.downloadsByCountry.sum,
                       ),
                       backgroundColor: 'var(--color-brand)',
                     }"
@@ -245,15 +255,20 @@
                 class="country-value"
               >
                 <div class="country-flag-container">
-                  <img
-                    :src="
-                      name.toLowerCase() === 'xx' || !name
-                        ? 'https://cdn.modrinth.com/placeholder-banner.svg'
-                        : countryCodeToFlag(name)
-                    "
-                    alt="Hidden country"
-                    class="country-flag"
-                  />
+                  <template v-if="name.toLowerCase() === 'xx' || !name">
+                    <img
+                      src="https://cdn.modrinth.com/placeholder-banner.svg"
+                      alt="Placeholder flag"
+                      class="country-flag"
+                    />
+                  </template>
+                  <template v-else>
+                    <img
+                      :src="countryCodeToFlag(name)"
+                      :alt="`${countryCodeToName(name)}'s flag`"
+                      class="country-flag"
+                    />
+                  </template>
                 </div>
                 <div class="country-text">
                   <strong class="country-name">
@@ -266,7 +281,7 @@
                   v-tooltip="
                     `${
                       Math.round(
-                        (count / analytics.formattedData.value.viewsByCountry.sum) * 10000
+                        (count / analytics.formattedData.value.viewsByCountry.sum) * 10000,
                       ) / 100
                     }%`
                   "
@@ -289,63 +304,50 @@
 </template>
 
 <script setup lang="ts">
-import {
-  Button,
-  UpdatedIcon,
-  DownloadIcon,
-  Card,
-  formatMoney,
-  formatNumber,
-  DropdownSelect,
-  formatCategoryHeader,
-} from 'omorphia'
-import dayjs from 'dayjs'
-import { defineProps, ref, computed } from 'vue'
+import { Button, Card, DropdownSelect } from "omorphia";
+import { formatMoney, formatNumber, formatCategoryHeader } from "omorphia";
+import { UpdatedIcon, DownloadIcon } from "omorphia";
+import dayjs from "dayjs";
+import { computed } from "vue";
 
-import { analyticsSetToCSVString, intToRgba } from '~/utils/analytics.js'
+import { analyticsSetToCSVString, intToRgba } from "~/utils/analytics.js";
 
-import { UiChartsCompactChart as CompactChart, UiChartsChart as Chart } from '#components'
+import { UiChartsCompactChart as CompactChart, UiChartsChart as Chart } from "#components";
 
-import PaletteIcon from '~/assets/icons/palette.svg?component'
+import PaletteIcon from "~/assets/icons/palette.svg?component";
 
-const router = useNativeRouter()
-const theme = useTheme()
+const router = useNativeRouter();
+const theme = useTheme();
 
 const props = withDefaults(
   defineProps<{
-    projects?: any[]
+    projects?: any[];
     /**
      * @deprecated Use `ranges` instead
      */
-    resoloutions?: Record<string, number>
-    ranges?: Record<number, [string, number] | string>
-    personal?: boolean
+    resoloutions?: Record<string, number>;
+    ranges?: RangeObject[];
+    personal?: boolean;
   }>(),
   {
     projects: undefined,
     resoloutions: () => defaultResoloutions,
     ranges: () => defaultRanges,
     personal: false,
-  }
-)
+  },
+);
 
-const projects = ref(props.projects || [])
-
-const selectableRanges = Object.entries(props.ranges).map(([duration, extra]) => ({
-  label: typeof extra === 'string' ? extra : extra[0],
-  value: Number(duration),
-  res: typeof extra === 'string' ? Number(duration) : extra[1],
-}))
+const projects = ref(props.projects || []);
 
 // const selectedChart = ref('downloads')
 const selectedChart = computed({
   get: () => {
-    const id = (router.currentRoute.value.query?.chart as string | undefined) || 'downloads'
+    const id = (router.currentRoute.value.query?.chart as string | undefined) || "downloads";
     // if the id is anything but the 3 charts we have or undefined, throw an error
-    if (!['downloads', 'views', 'revenue'].includes(id)) {
-      throw new Error(`Unknown chart ${id}`)
+    if (!["downloads", "views", "revenue"].includes(id)) {
+      throw new Error(`Unknown chart ${id}`);
     }
-    return id
+    return id;
   },
   set: (chart) => {
     router.push({
@@ -353,153 +355,353 @@ const selectedChart = computed({
         ...router.currentRoute.value.query,
         chart,
       },
-    })
+    });
   },
-})
+});
 
 // Chart refs
-const downloadsChart = ref()
-const viewsChart = ref()
-const revenueChart = ref()
-const tinyDownloadChart = ref()
-const tinyViewChart = ref()
-const tinyRevenueChart = ref()
+const downloadsChart = ref();
+const viewsChart = ref();
+const revenueChart = ref();
+const tinyDownloadChart = ref();
+const tinyViewChart = ref();
+const tinyRevenueChart = ref();
 
-const selectedDisplayProjects = ref(props.projects || [])
+const selectedDisplayProjects = ref(props.projects || []);
 
 const removeProjectFromDisplay = (id: string) => {
-  selectedDisplayProjects.value = selectedDisplayProjects.value.filter((p) => p.id !== id)
-}
+  selectedDisplayProjects.value = selectedDisplayProjects.value.filter((p) => p.id !== id);
+};
 
 const addProjectToDisplay = (id: string) => {
   selectedDisplayProjects.value = [
     ...selectedDisplayProjects.value,
     props.projects?.find((p) => p.id === id),
-  ].filter(Boolean)
-}
+  ].filter(Boolean);
+};
 
 const projectIsOnDisplay = (id: string) => {
-  return selectedDisplayProjects.value?.some((p) => p.id === id) ?? false
-}
+  return selectedDisplayProjects.value?.some((p) => p.id === id) ?? false;
+};
 
 const resetCharts = () => {
-  downloadsChart.value?.resetChart()
-  viewsChart.value?.resetChart()
-  revenueChart.value?.resetChart()
+  downloadsChart.value?.resetChart();
+  viewsChart.value?.resetChart();
+  revenueChart.value?.resetChart();
 
-  tinyDownloadChart.value?.resetChart()
-  tinyViewChart.value?.resetChart()
-  tinyRevenueChart.value?.resetChart()
-}
+  tinyDownloadChart.value?.resetChart();
+  tinyViewChart.value?.resetChart();
+  tinyRevenueChart.value?.resetChart();
+};
 
 const isUsingProjectColors = computed({
   get: () => {
     return (
-      router.currentRoute.value.query?.colors === 'true' ||
+      router.currentRoute.value.query?.colors === "true" ||
       router.currentRoute.value.query?.colors === undefined
-    )
+    );
   },
   set: (newValue) => {
     router.push({
       query: {
         ...router.currentRoute.value.query,
-        colors: newValue ? 'true' : 'false',
+        colors: newValue ? "true" : "false",
       },
-    })
+    });
   },
-})
+});
+
+const startDate = ref(dayjs().startOf("day"));
+const endDate = ref(dayjs().endOf("day"));
+const timeResolution = ref(30);
+
+onBeforeMount(() => {
+  // Load cached data and range from localStorage - cache.
+  if (import.meta.client) {
+    const rangeLabel = localStorage.getItem("analyticsSelectedRange");
+    if (rangeLabel) {
+      const range = props.ranges.find((r) => r.getLabel([dayjs(), dayjs()]) === rangeLabel)!;
+
+      if (range !== undefined) {
+        internalRange.value = range;
+        const ranges = range.getDates(dayjs());
+        timeResolution.value = range.timeResolution;
+        startDate.value = ranges.startDate;
+        endDate.value = ranges.endDate;
+      }
+    }
+  }
+});
+
+onMounted(() => {
+  if (internalRange.value === null) {
+    internalRange.value = props.ranges.find(
+      (r) => r.getLabel([dayjs(), dayjs()]) === "Previous 30 days",
+    )!;
+  }
+
+  const ranges = selectedRange.value.getDates(dayjs());
+  startDate.value = ranges.startDate;
+  endDate.value = ranges.endDate;
+  timeResolution.value = selectedRange.value.timeResolution;
+});
+
+const internalRange: Ref<RangeObject> = ref(null as unknown as RangeObject);
+
+const selectedRange = computed({
+  get: () => {
+    return internalRange.value;
+  },
+  set: (newRange) => {
+    const ranges = newRange.getDates(dayjs());
+    startDate.value = ranges.startDate;
+    endDate.value = ranges.endDate;
+    timeResolution.value = newRange.timeResolution;
+
+    internalRange.value = newRange;
+
+    if (import.meta.client) {
+      localStorage.setItem(
+        "analyticsSelectedRange",
+        internalRange.value?.getLabel([dayjs(), dayjs()]) ?? "Previous 30 days",
+      );
+    }
+  },
+});
 
 const analytics = useFetchAllAnalytics(
   resetCharts,
   projects,
   selectedDisplayProjects,
-  props.personal
-)
+  props.personal,
+  startDate,
+  endDate,
+  timeResolution,
+);
 
-const { startDate, endDate, timeRange, timeResolution } = analytics
-
-const selectedRange = computed({
-  get: () => {
-    return (
-      selectableRanges.find((option) => option.value === timeRange.value) || {
-        label: 'Custom',
-        value: timeRange.value,
-      }
-    )
-  },
-  set: (newRange: { label: string; value: number; res?: number }) => {
-    timeRange.value = newRange.value
-    startDate.value = Date.now() - timeRange.value * 60 * 1000
-    endDate.value = Date.now()
-
-    if (newRange?.res) {
-      timeResolution.value = newRange.res
-    }
-  },
-})
+const formattedCategorySubtitle = computed(() => {
+  return (
+    selectedRange.value?.getLabel([dayjs(startDate.value), dayjs(endDate.value)]) ?? "Loading..."
+  );
+});
 
 const selectedDataSet = computed(() => {
   switch (selectedChart.value) {
-    case 'downloads':
-      return analytics.totalData.value.downloads
-    case 'views':
-      return analytics.totalData.value.views
-    case 'revenue':
-      return analytics.totalData.value.revenue
+    case "downloads":
+      return analytics.totalData.value.downloads;
+    case "views":
+      return analytics.totalData.value.views;
+    case "revenue":
+      return analytics.totalData.value.revenue;
     default:
-      throw new Error(`Unknown chart ${selectedChart.value}`)
+      throw new Error(`Unknown chart ${selectedChart.value}`);
   }
-})
+});
 const selectedDataSetProjects = computed(() => {
   return selectedDataSet.value.projectIds
     .map((id) => props.projects?.find((p) => p?.id === id))
-    .filter(Boolean)
-})
+    .filter(Boolean);
+});
 
 const downloadSelectedSetAsCSV = () => {
-  const selectedChartName = selectedChart.value
+  const selectedChartName = selectedChart.value;
 
-  const csv = analyticsSetToCSVString(selectedDataSet.value)
+  const csv = analyticsSetToCSVString(selectedDataSet.value);
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-  link.setAttribute('href', url)
-  link.setAttribute('download', `${selectedChartName}-data.csv`)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `${selectedChartName}-data.csv`);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
 
-  link.click()
-}
+  link.click();
+};
 
-const onDownloadSetAsCSV = useClientTry(async () => await downloadSelectedSetAsCSV())
+const onDownloadSetAsCSV = useClientTry(async () => await downloadSelectedSetAsCSV());
 const onToggleColors = () => {
-  isUsingProjectColors.value = !isUsingProjectColors.value
-}
+  isUsingProjectColors.value = !isUsingProjectColors.value;
+};
 </script>
 
 <script lang="ts">
+/**
+ * @deprecated Use `ranges` instead
+ */
 const defaultResoloutions: Record<string, number> = {
-  '5 minutes': 5,
-  '30 minutes': 30,
-  'An hour': 60,
-  '12 hours': 720,
-  'A day': 1440,
-  'A week': 10080,
-}
+  "5 minutes": 5,
+  "30 minutes": 30,
+  "An hour": 60,
+  "12 hours": 720,
+  "A day": 1440,
+  "A week": 10080,
+};
 
-const defaultRanges: Record<number, [string, number] | string> = {
-  30: ['Last 30 minutes', 1],
-  60: ['Last hour', 5],
-  720: ['Last 12 hours', 15],
-  1440: ['Last day', 60],
-  10080: ['Last week', 720],
-  43200: ['Last month', 1440],
-  129600: ['Last quarter', 10080],
-  525600: ['Last year', 20160],
-  1051200: ['Last two years', 40320],
-}
+type DateRange = { startDate: dayjs.Dayjs; endDate: dayjs.Dayjs };
+
+type RangeObject = {
+  getLabel: (dateRange: [dayjs.Dayjs, dayjs.Dayjs]) => string;
+  getDates: (currentDate: dayjs.Dayjs) => DateRange;
+  // A time resolution in minutes.
+  timeResolution: number;
+};
+
+const defaultRanges: RangeObject[] = [
+  {
+    getLabel: () => "Previous 30 minutes",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(30, "minute"),
+      endDate: currentDate,
+    }),
+    timeResolution: 1,
+  },
+  {
+    getLabel: () => "Previous hour",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "hour"),
+      endDate: currentDate,
+    }),
+    timeResolution: 5,
+  },
+  {
+    getLabel: () => "Previous 12 hours",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(12, "hour"),
+      endDate: currentDate,
+    }),
+    timeResolution: 12,
+  },
+  {
+    getLabel: () => "Previous 24 hours",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "day"),
+      endDate: currentDate,
+    }),
+    timeResolution: 30,
+  },
+  {
+    getLabel: () => "Today",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("day"),
+      endDate: currentDate,
+    }),
+    timeResolution: 30,
+  },
+  {
+    getLabel: () => "Yesterday",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "day").startOf("day"),
+      endDate: dayjs(currentDate).startOf("day").subtract(1, "second"),
+    }),
+    timeResolution: 30,
+  },
+  {
+    getLabel: () => "This week",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("week").add(1, "hour"),
+      endDate: currentDate,
+    }),
+    timeResolution: 360,
+  },
+  {
+    getLabel: () => "Last week",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "week").startOf("week").add(1, "hour"),
+      endDate: dayjs(currentDate).startOf("week").subtract(1, "second"),
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "Previous 7 days",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("day").subtract(7, "day").add(1, "hour"),
+      endDate: currentDate.startOf("day"),
+    }),
+    timeResolution: 720,
+  },
+  {
+    getLabel: () => "This month",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("month").add(1, "hour"),
+      endDate: currentDate,
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "Last month",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "month").startOf("month").add(1, "hour"),
+      endDate: dayjs(currentDate).startOf("month").subtract(1, "second"),
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "Previous 30 days",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("day").subtract(30, "day").add(1, "hour"),
+      endDate: currentDate.startOf("day"),
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "This quarter",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("quarter").add(1, "hour"),
+      endDate: currentDate,
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "Last quarter",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "quarter").startOf("quarter").add(1, "hour"),
+      endDate: dayjs(currentDate).startOf("quarter").subtract(1, "second"),
+    }),
+    timeResolution: 1440,
+  },
+  {
+    getLabel: () => "This year",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).startOf("year"),
+      endDate: currentDate,
+    }),
+    timeResolution: 20160,
+  },
+  {
+    getLabel: () => "Last year",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "year").startOf("year"),
+      endDate: dayjs(currentDate).startOf("year").subtract(1, "second"),
+    }),
+    timeResolution: 20160,
+  },
+  {
+    getLabel: () => "Previous year",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(1, "year"),
+      endDate: dayjs(currentDate),
+    }),
+    timeResolution: 40320,
+  },
+  {
+    getLabel: () => "Previous two years",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(currentDate).subtract(2, "year"),
+      endDate: currentDate,
+    }),
+    timeResolution: 40320,
+  },
+  {
+    getLabel: () => "All Time",
+    getDates: (currentDate: dayjs.Dayjs) => ({
+      startDate: dayjs(0),
+      endDate: currentDate,
+    }),
+    timeResolution: 40320,
+  },
+];
 </script>
 
 <style scoped lang="scss">
@@ -520,6 +722,20 @@ const defaultRanges: Record<number, [string, number] | string> = {
       min-height: auto;
     }
   }
+
+  h2 {
+    display: flex;
+    flex-direction: column;
+
+    .label__subtitle {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
+.range-dropdown {
+  font-size: var(--font-size-sm);
 }
 
 .chart-area {
@@ -597,7 +813,9 @@ const defaultRanges: Record<number, [string, number] | string> = {
 .chart-button-base__selected {
   color: var(--color-contrast);
   background-color: var(--color-brand-highlight);
-  box-shadow: inset 0 0 0 transparent, 0 0 0 2px var(--color-brand);
+  box-shadow:
+    inset 0 0 0 transparent,
+    0 0 0 2px var(--color-brand);
 
   &:hover {
     background-color: var(--color-brand-highlight);
@@ -669,7 +887,7 @@ const defaultRanges: Record<number, [string, number] | string> = {
 
 .country-value {
   display: grid;
-  grid-template-areas: 'flag text bar';
+  grid-template-areas: "flag text bar";
   grid-template-columns: auto 1fr 10rem;
   align-items: center;
   justify-content: space-between;
@@ -682,6 +900,7 @@ const defaultRanges: Record<number, [string, number] | string> = {
     flex-direction: column;
     gap: var(--gap-xs);
   }
+
   .percentage-bar {
     grid-area: bar;
     width: 100%;
@@ -690,6 +909,7 @@ const defaultRanges: Record<number, [string, number] | string> = {
     border: 1px solid var(--color-button-bg);
     border-radius: var(--radius-sm);
     overflow: hidden;
+
     span {
       display: block;
       height: 100%;
